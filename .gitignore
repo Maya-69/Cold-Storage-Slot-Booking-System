@@ -1,0 +1,35 @@
+# Maven build artifacts
+**/target/
+target/
+*.class
+
+# Log files
+*.log
+*.log.*
+
+# IDE configurations
+.idea/
+*.iml
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Operating System Files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store
+
+# Portable Maven Archive
+maven/
+*.zip
+
+# Archived previous document drafts
+docs/prev/
+
+# Workspace specific files
+README_FOR_FRIEND.txt
