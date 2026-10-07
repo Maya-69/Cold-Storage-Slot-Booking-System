@@ -73,8 +73,7 @@ public class BookingService {
         }
 
         // Resolved Conflict: Standardize reference with CSBS-2026-RES- combining year and reservation tag
-        // Alternative prefix on dev branch
-        String ref = "CSBS-2026-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        String ref = "CSBS-2026-RES-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
         booking.setBookingReference(ref);
 
         // Calculate Cost: days * crates * pricePerCrate
