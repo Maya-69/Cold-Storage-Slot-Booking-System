@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Cold Storage Slot Booking System | Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        .kpi-card { border-radius: 10px; transition: transform 0.2s; }
+        .kpi-card:hover { transform: translateY(-3px); }
+        .zone-badge-DEEP_FREEZE { background-color: #0d6efd; color: white; }
+        .zone-badge-CHILLED { background-color: #0dcaf0; color: black; }
+        .zone-badge-CONTROLLED_ATMOSPHERE { background-color: #ffc107; color: black; }
+        .status-badge-PENDING { background-color: #ffc107; color: black; }
+        .status-badge-CONFIRMED { background-color: #198754; color: white; }
+        .status-badge-CHECKED_IN { background-color: #0d6efd; color: white; }
+        .status-badge-CANCELLED { background-color: #dc3545; color: white; }
+        .status-badge-COMPLETED { background-color: #6c757d; color: white; }
+    </style>
+</head>
+<body class="bg-light">
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
+    <div class="container-fluid px-4">
+        <a class="navbar-brand fw-bold" href="/" id="brand-logo">
+            <i class="bi bi-snow2 text-info"></i> Cold Storage Slot Booking System
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navContent">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navContent">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item"><a class="nav-link active" href="/" id="nav-dashboard">Dashboard</a></li>
+                <li class="nav-item"><a class="nav-link" href="/slots" id="nav-slots">Chamber Directory</a></li>
+                <li class="nav-item"><a class="nav-link" href="/bookings/new" id="nav-book">Book a Slot</a></li>
+                <li class="nav-item"><a class="nav-link" href="/bookings" id="nav-bookings">All Bookings</a></li>
+            </ul>
+            <div class="d-flex align-items-center">
+                <span class="badge bg-success me-3"><i class="bi bi-activity"></i> Actuator: UP</span>
+                <a href="/login" class="btn btn-outline-light btn-sm me-2" id="nav-login">Login</a>
+                <a href="/register" class="btn btn-primary btn-sm" id="nav-register">Register</a>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- Main Container -->
+<div class="container-fluid px-4 py-4">
+
+    <!-- Flash Messages -->
+    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert" id="success-alert">
+        <i class="bi bi-check-circle-fill"></i> <span th:text="${successMessage}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <!-- Student Header & Academic Identity -->
+    <div class="card mb-4 border-0 shadow-sm">
+        <div class="card-body bg-white rounded p-3 d-flex justify-content-between align-items-center">
+            <div>
+                <h5 class="mb-1 text-primary fw-bold">Cold Storage Automated DevOps Logistics Platform</h5>
+                <p class="text-muted mb-0 small">B.E. Semester VII Computer Engineering | DevOps Lab Project</p>
+            </div>
+            <div class="text-end">
+                <span class="badge bg-secondary">Student: Mayuresh Sawant</span>
+                <span class="badge bg-dark">Roll: 23102A0029</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- KPI Summary Row -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card kpi-card shadow-sm border-primary border-start border-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted fw-normal mb-1">Total Capacity</h6>
+                            <h3 class="fw-bold mb-0 text-primary" id="kpi-total-capacity" th:text="${totalCapacity} + ' Slots'">115 Slots</h3>
+                        </div>
+                        <i class="bi bi-boxes fs-1 text-primary opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card kpi-card shadow-sm border-success border-start border-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted fw-normal mb-1">Available Slots</h6>
+                            <h3 class="fw-bold mb-0 text-success" id="kpi-available-slots" th:text="${availableCapacity} + ' Free'">95 Free</h3>
+                        </div>
+                        <i class="bi bi-check2-circle fs-1 text-success opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card kpi-card shadow-sm border-warning border-start border-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted fw-normal mb-1">Booked Slots</h6>
+                            <h3 class="fw-bold mb-0 text-warning" id="kpi-booked-slots" th:text="${bookedSlots} + ' Active'">20 Active</h3>
+                        </div>
+                        <i class="bi bi-lock-fill fs-1 text-warning opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card kpi-card shadow-sm border-info border-start border-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted fw-normal mb-1">Active Reservations</h6>
+                            <h3 class="fw-bold mb-0 text-info" id="kpi-active-reservations" th:text="${activeReservations}">3</h3>
+                        </div>
+                        <i class="bi bi-calendar2-check fs-1 text-info opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cold Chambers Overview -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 fw-bold"><i class="bi bi-thermometer-snow text-primary"></i> Multi-Temperature Chambers</h5>
+                    <a href="/slots" class="btn btn-outline-primary btn-sm">Full Directory &rarr;</a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0" id="chambers-table">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Chamber Code</th>
+                                    <th>Chamber Name</th>
+                                    <th>Temperature Zone</th>
+                                    <th>Thermal Range</th>
+                                    <th>Capacity</th>
+                                    <th>Rate / Crate</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="c : ${chambers}">
+                                    <td><strong th:text="${c.chamberCode}">CH-DF1</strong></td>
+                                    <td th:text="${c.name}">Deep Freeze Unit</td>
+                                    <td>
+                                        <span class="badge" th:classappend="'zone-badge-' + ${c.zoneType}"
+                                              th:text="${c.zoneType}">DEEP_FREEZE</span>
+                                    </td>
+                                    <td th:text="${c.minTemperature} + '°C to ' + ${c.maxTemperature} + '°C'">-25°C to -18°C</td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <span class="me-2 small" th:text="${c.availableSlots} + '/' + ${c.totalSlots}">16/20</span>
+                                            <div class="progress flex-grow-1" style="height: 6px;">
+                                                <div class="progress-bar bg-success" role="progressbar" 
+                                                     th:style="'width: ' + (${c.availableSlots} * 100 / ${c.totalSlots}) + '%'"></div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td th:text="'Rs. ' + ${c.pricePerDayPerCrate}">Rs. 45.00</td>
+                                    <td>
+                                        <a th:href="@{/bookings/new(chamberCode=${c.chamberCode})}" 
+                                           class="btn btn-primary btn-sm" th:id="'btn-book-' + ${c.chamberCode}">
+                                            Book Slot
+                                        </a>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Booking CTA Card -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm border-0 h-100 bg-primary text-white">
+                <div class="card-body d-flex flex-column justify-content-between p-4">
+                    <div>
+                        <h4 class="fw-bold mb-2"><i class="bi bi-calendar-plus"></i> Reserve Cold Storage</h4>
+                        <p class="opacity-75">Reserve verified temperature-controlled slots for fruits, vegetables, dairy, or frozen seafood in seconds. 0% produce loss.</p>
+                        <ul class="list-unstyled opacity-90 small mb-4">
+                            <li><i class="bi bi-check2"></i> Real-time slot availability</li>
+                            <li><i class="bi bi-check2"></i> Certified FSSAI temperature zones</li>
+                            <li><i class="bi bi-check2"></i> Instant digital booking reference</li>
+                        </ul>
+                    </div>
+                    <a href="/bookings/new" class="btn btn-light btn-lg fw-bold text-primary w-100" id="btn-quick-book">
+                        <i class="bi bi-arrow-right-circle"></i> Book Chamber Slot Now
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Reservations -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 fw-bold"><i class="bi bi-clock-history text-secondary"></i> Active Cold Storage Reservations</h5>
+            <a href="/bookings" class="btn btn-outline-secondary btn-sm">Manage All Bookings &rarr;</a>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" id="recent-bookings-table">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Reference</th>
+                            <th>Farmer / Trader</th>
+                            <th>Contact</th>
+                            <th>Commodity</th>
+                            <th>Chamber</th>
+                            <th>Slot</th>
+                            <th>Crates</th>
+                            <th>Dates</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="b : ${recentBookings}">
+                            <td><strong th:text="${b.bookingReference}">CSBS-INIT001</strong></td>
+                            <td th:text="${b.farmerName}">Ramesh Patil</td>
+                            <td th:text="${b.contactNumber}">9822012345</td>
+                            <td th:text="${b.commodityType}">Apples</td>
+                            <td><span class="badge bg-secondary" th:text="${b.chamberCode}">CH-CH1</span></td>
+                            <td th:text="${b.slotNumber}">CH1-S01</td>
+                            <td th:text="${b.cratesCount} + ' Crates'">40 Crates</td>
+                            <td class="small" th:text="${b.checkInDate} + ' to ' + ${b.checkOutDate}">2026-10-20 to 2026-11-04</td>
+                            <td>
+                                <span class="badge" th:classappend="'status-badge-' + ${b.status}"
+                                      th:text="${b.status}">CONFIRMED</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
