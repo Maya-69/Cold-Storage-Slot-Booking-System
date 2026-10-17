@@ -1,0 +1,13 @@
+target/
+*.class
+*.log
+.git/
+.gitignore
+.idea/
+*.iml
+.vscode/
+screenshots/
+docs/
+templates/
+scripts/
+README.md
