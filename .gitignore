@@ -33,3 +33,7 @@ docs/prev/
 
 # Workspace specific files
 README_FOR_FRIEND.txt
+
+# Python cache
+__pycache__/
+*.pyc
