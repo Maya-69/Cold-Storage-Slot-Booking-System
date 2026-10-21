@@ -1,0 +1,53 @@
+---
+# ==============================================================================
+# Ansible Playbook: Automated Rollback to Previous Stable Release
+# Student: Mayuresh Sawant (23102A0029)
+# Subject: DevOps Lab | Evaluator: Dr. Snehal Andhare
+# ==============================================================================
+- name: Rollback Cold Storage Application to Previous Stable Release
+  hosts: coldstorage_servers
+  become: true
+  vars:
+    rollback_version: "{{ prior_stable_version | default('1.0.0') }}"
+    container_name: "coldstorage-prod"
+
+  tasks:
+    - name: 1. Alert operations of initiated rollback sequence
+      ansible.builtin.debug:
+        msg: "CRITICAL: Initiating automated rollback to previous verified release: mayureshsawant/{{ app_name }}:{{ rollback_version }}"
+
+    - name: 2. Terminate and remove failing container
+      ansible.builtin.command:
+        cmd: "docker rm -f {{ container_name }}"
+      register: remove_broken
+      failed_when: false
+      changed_when: true
+
+    - name: 3. Launch container from previous stable image release
+      ansible.builtin.command:
+        cmd: >
+          docker run -d
+          --name {{ container_name }}
+          --restart always
+          -p {{ app_port }}:8080
+          -v {{ app_root_dir }}/config:/app/config:ro
+          -v {{ app_root_dir }}/logs:/app/logs:rw
+          -e SPRING_PROFILES_ACTIVE={{ env }}
+          mayureshsawant/{{ app_name }}:{{ rollback_version }}
+      register: launch_stable
+      changed_when: launch_stable.rc == 0
+
+    - name: 4. Interrogate Actuator health endpoint for recovery confirmation
+      ansible.builtin.uri:
+        url: "http://localhost:{{ app_port }}/actuator/health"
+        method: GET
+        status_code: 200
+        return_content: yes
+      register: rollback_health
+      until: rollback_health.status == 200 and '\"status\":\"UP\"' in rollback_health.content
+      retries: 10
+      delay: 3
+
+    - name: 5. Confirm successful rollback recovery
+      ansible.builtin.debug:
+        msg: "RECOVERY COMPLETE: System successfully restored to stable version {{ rollback_version }}. Actuator status: UP."

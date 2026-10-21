@@ -1,0 +1,118 @@
+---
+# ==============================================================================
+# Ansible Playbook: Target Node Provisioning for Cold Storage Slot Booking System
+# Student: Mayuresh Sawant (23102A0029)
+# Evaluator: Dr. Snehal Andhare
+# ==============================================================================
+- name: Configure Target Nodes for Cold Storage Slot Booking System
+  hosts: coldstorage_servers
+  become: true
+  vars:
+    required_packages:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - gnupg
+      - lsb-release
+      - openjdk-21-jre-headless
+      - ufw
+      - wget
+      - unzip
+
+  handlers:
+    - name: Restart docker
+      ansible.builtin.systemd:
+        name: docker
+        state: restarted
+
+    - name: Reload ufw
+      ansible.builtin.ufw:
+        state: reloaded
+
+  tasks:
+    - name: 1. Update apt package index
+      ansible.builtin.apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: 2. Install baseline system prerequisite packages
+      ansible.builtin.apt:
+        name: "{{ required_packages }}"
+        state: present
+
+    - name: 3. Add Docker official GPG key
+      ansible.builtin.apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: 4. Configure Docker APT repository
+      ansible.builtin.apt_repository:
+        repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+        state: present
+
+    - name: 5. Install Docker CE and container runtime
+      ansible.builtin.apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+        state: present
+      notify: Restart docker
+
+    - name: 6. Ensure Docker service is enabled and running
+      ansible.builtin.systemd:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: 7. Create dedicated coldstorage system group
+      ansible.builtin.group:
+        name: "{{ app_group }}"
+        state: present
+        gid: 1001
+
+    - name: 8. Create coldstorage unprivileged service user
+      ansible.builtin.user:
+        name: "{{ app_user }}"
+        group: "{{ app_group }}"
+        uid: 1001
+        shell: /bin/false
+        home: "{{ app_root_dir }}"
+        create_home: no
+        state: present
+
+    - name: 9. Add ansible and coldstorage users to docker group
+      ansible.builtin.user:
+        name: "{{ item }}"
+        groups: docker
+        append: yes
+      loop:
+        - "{{ app_user }}"
+        - "{{ ansible_user }}"
+
+    - name: 10. Create application directory structure with secure permissions
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: "{{ app_user }}"
+        group: "{{ app_group }}"
+        mode: '0750'
+      loop:
+        - "{{ app_root_dir }}"
+        - "{{ app_root_dir }}/config"
+        - "{{ app_root_dir }}/logs"
+
+    - name: 11. Deploy application production configuration from Jinja2 template
+      ansible.builtin.template:
+        src: templates/application-prod.properties.j2
+        dest: "{{ app_root_dir }}/config/application-prod.properties"
+        owner: "{{ app_user }}"
+        group: "{{ app_group }}"
+        mode: '0640'
+
+    - name: 12. Configure UFW firewall to permit application traffic
+      ansible.builtin.ufw:
+        rule: allow
+        port: "{{ app_port }}"
+        proto: tcp
+      notify: Reload ufw

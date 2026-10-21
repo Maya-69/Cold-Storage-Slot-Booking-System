@@ -1,0 +1,27 @@
+# ==============================================================================
+# Production Configuration for Cold Storage Slot Booking System
+# Generated via Ansible Automation for {{ inventory_hostname }}
+# Environment: {{ env }}
+# Managed by: Mayuresh Sawant (23102A0029)
+# ==============================================================================
+
+server.port={{ app_port }}
+spring.application.name={{ app_name }}
+
+# Actuator Health Endpoints
+management.endpoints.web.exposure.include=health,info,metrics
+management.endpoint.health.show-details=always
+
+# In-Memory Storage & H2 Configuration
+spring.datasource.url=jdbc:h2:mem:coldstoragedb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+spring.datasource.driverClassName=org.h2.Driver
+spring.datasource.username=sa
+spring.datasource.password=
+spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
+spring.jpa.hibernate.ddl-auto=update
+
+# Logging Configuration
+logging.level.root=INFO
+logging.level.com.coldstorage=DEBUG
+logging.file.name={{ app_root_dir }}/logs/application.log
+logging.pattern.file=%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n

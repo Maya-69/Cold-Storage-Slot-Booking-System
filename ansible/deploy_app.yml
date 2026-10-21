@@ -1,0 +1,62 @@
+---
+# ==============================================================================
+# Ansible Playbook: Application Container Deployment & Health Validation
+# Student: Mayuresh Sawant (23102A0029)
+# Subject: DevOps Lab | Evaluator: Dr. Snehal Andhare
+# ==============================================================================
+- name: Deploy Cold Storage Application Container
+  hosts: coldstorage_servers
+  become: true
+  vars:
+    app_version: "{{ version | default('latest') }}"
+    container_name: "coldstorage-prod"
+
+  tasks:
+    - name: 1. Pull versioned application image from registry
+      ansible.builtin.command:
+        cmd: "docker pull mayureshsawant/{{ app_name }}:{{ app_version }}"
+      register: docker_pull
+      changed_when: "'Image is up to date' not in docker_pull.stdout"
+
+    - name: 2. Stop existing application container if running
+      ansible.builtin.command:
+        cmd: "docker stop {{ container_name }}"
+      register: docker_stop
+      failed_when: false
+      changed_when: docker_stop.rc == 0
+
+    - name: 3. Remove existing application container
+      ansible.builtin.command:
+        cmd: "docker rm -f {{ container_name }}"
+      register: docker_rm
+      failed_when: false
+      changed_when: docker_rm.rc == 0
+
+    - name: 4. Launch fresh application container
+      ansible.builtin.command:
+        cmd: >
+          docker run -d
+          --name {{ container_name }}
+          --restart always
+          -p {{ app_port }}:8080
+          -v {{ app_root_dir }}/config:/app/config:ro
+          -v {{ app_root_dir }}/logs:/app/logs:rw
+          -e SPRING_PROFILES_ACTIVE={{ env }}
+          mayureshsawant/{{ app_name }}:{{ app_version }}
+      register: docker_run
+      changed_when: docker_run.rc == 0
+
+    - name: 5. Wait for application startup and verify Actuator health probe
+      ansible.builtin.uri:
+        url: "http://localhost:{{ app_port }}/actuator/health"
+        method: GET
+        status_code: 200
+        return_content: yes
+      register: health_check
+      until: health_check.status == 200 and '\"status\":\"UP\"' in health_check.content
+      retries: 12
+      delay: 5
+
+    - name: 6. Display verified health status
+      ansible.builtin.debug:
+        msg: "Cold Storage Slot Booking System is LIVE and HEALTHY! Health Payload: {{ health_check.content }}"
