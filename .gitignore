@@ -37,3 +37,4 @@ README_FOR_FRIEND.txt
 # Python cache
 __pycache__/
 *.pyc
+docs/Other labs/
